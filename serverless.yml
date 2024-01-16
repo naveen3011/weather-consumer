@@ -1,0 +1,45 @@
+org: naveen3011
+app: weather-consumer
+service: weather-consumer
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+
+functions:
+  hello:
+    handler: handler.process_sqs_message
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - weatherQueue
+              - Arn
+          batchSize: 5
+
+resources:
+  Resources:
+    weatherQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: weatherQueue
+
+    WeatherTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: newWeatherTableName
+        AttributeDefinitions:
+          - AttributeName: name
+            AttributeType: S
+          - AttributeName: dt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: name
+            KeyType: HASH
+          - AttributeName: dt
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
